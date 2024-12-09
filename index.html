@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>圆弦长计算与可视化</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: '微软雅黑', sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f0f2f5;
+            color: #333;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+        }
+        h1 {
+            text-align: center;
+            color: #1a237e;
+            margin-bottom: 30px;
+            font-size: 2.2em;
+        }
+        .canvas-container {
+            width: 100%;
+            max-width: 600px;
+            margin: 30px auto;
+            position: relative;
+            padding: 20px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.05);
+        }
+        .results {
+            margin-top: 30px;
+            padding: 20px;
+            background: linear-gradient(145deg, #e3f2fd, #bbdefb);
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(25,118,210,0.1);
+            transition: all 0.3s ease;
+        }
+        .results:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(25,118,210,0.2);
+        }
+        .method {
+            margin-top: 30px;
+            padding: 25px;
+            border: none;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.05);
+        }
+        #simulationCount {
+            font-size: 28px;
+            color: #1976D2;
+            text-align: center;
+            margin: 20px 0;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+        button {
+            padding: 12px 24px;
+            margin: 8px;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(145deg, #1976D2, #1565C0);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+            background: linear-gradient(145deg, #1565C0, #0D47A1);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        h3 {
+            color: #1565C0;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+        }
+        p {
+            line-height: 1.6;
+            margin: 10px 0;
+            color: #424242;
+        }
+        .results p {
+            font-size: 1.1em;
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(25,118,210,0.1);
+        }
+        .results p span {
+            font-weight: bold;
+            color: #1976D2;
+        }
+        .button-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .description {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border-left: 4px solid #1976D2;
+        }
+        
+        .description p {
+            margin: 10px 0;
+            color: #37474f;
+        }
+        
+        .description ul {
+            margin: 15px 0;
+            padding-left: 25px;
+        }
+        
+        .description li {
+            margin: 8px 0;
+            color: #37474f;
+            line-height: 1.5;
+        }
+        
+        .note {
+            font-style: italic;
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 15px;
+            padding-top: 10px;
+            border-top: 1px dashed #ddd;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>圆弦长计算与可视化</h1>
+        
+        <div class="description">
+            <p>本动画展示了半径为1的圆中，所有长度为√3的弦的分布。通过随机采样方法，我们可以：</p>
+            <ul>
+                <li>直观地观察√3长度弦的分布规律</li>
+                <li>验证特定长度弦出现的概率</li>
+                <li>理解圆的几何性质</li>
+            </ul>
+            <p class="note">注：绿色点表示√3长度弦的中点，绿色线段表示√3长度的弦</p>
+        </div>
+        
+        <div class="canvas-container">
+            <canvas id="circleCanvas"></canvas>
+        </div>
+
+        <div id="simulationCount">模拟次数: 0</div>
+
+        <div class="results">
+            <h3>计算结果：</h3>
+            <p>总模拟次数：<span id="totalCount">0</span></p>
+            <p>弦长为√3的次数：<span id="sqrtThreeCount">0</span></p>
+            <p>概率：<span id="probability">0</span>%</p>
+        </div>
+
+        <div class="method">
+            <h3>计算方法说明：</h3>
+            <p>1. 随机方法：随机生成圆上两点，计算弦长</p>
+            <p>2. 几何方法：通过圆心到弦的距离计算</p>
+            <p>3. 解析方法：使用参数方程计算</p>
+            <div class="button-container">
+                <button onclick="startSimulation()">开始模拟</button>
+                <button onclick="pauseSimulation()">暂停</button>
+                <button onclick="resetSimulation()">重置</button>
+                <button onclick="toggleChords()" id="toggleButton">隐藏弦</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let totalCount = 0;
+        let sqrtThreeCount = 0;
+        const SQRT3 = Math.sqrt(3);
+        const EPSILON = 0.1; // 误差范围
+        let animationId;
+        let isPaused = false;
+        let showChords = true;  // 添加控制弦显示的变量
+
+        const canvas = document.getElementById('circleCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 400;
+        canvas.height = 400;
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const radius = Math.min(centerX, centerY) - 10;
+
+        // 添加存储所有弦的数组
+        let allChords = [];
+
+        function drawCircle() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+            ctx.stroke();
+
+            // 只绘制√3长度的弦和所有中点
+            allChords.forEach(chord => {
+                if (chord.isMatch) {
+                    // 绘制中点
+                    drawChordMidpoint(chord.point1, chord.point2);
+                    // 根据显示状态绘制弦
+                    if (showChords) {
+                        drawChord(chord.point1, chord.point2, true);
+                    }
+                }
+            });
+        }
+
+        function drawChordMidpoint(point1, point2) {
+            const midX = centerX + (point1.x + point2.x) * radius / 2;
+            const midY = centerY + (point1.y + point2.y) * radius / 2;
+
+            ctx.beginPath();
+            ctx.arc(midX, midY, 3, 0, 2 * Math.PI);
+            ctx.fillStyle = '#4CAF50';  // 使用绿色标记中点
+            ctx.fill();
+        }
+
+        function drawChord(point1, point2, isMatch) {
+            if (!showChords) return;  // 如果不显示弦，直接返回
+            
+            ctx.beginPath();
+            ctx.moveTo(
+                centerX + point1.x * radius,
+                centerY + point1.y * radius
+            );
+            ctx.lineTo(
+                centerX + point2.x * radius,
+                centerY + point2.y * radius
+            );
+            ctx.strokeStyle = '#4CAF50';  // 只使用绿色
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 1;
+        }
+
+        function calculateChordLength(x1, y1, x2, y2) {
+            return Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+        }
+
+        function getRandomPointOnCircle(radius) {
+            const angle = Math.random() * 2 * Math.PI;
+            return {
+                x: Math.cos(angle),
+                y: Math.sin(angle)
+            };
+        }
+
+        function toggleChords() {
+            showChords = !showChords;
+            document.getElementById('toggleButton').textContent = 
+                showChords ? '隐藏弦' : '显示弦';
+            drawCircle();
+        }
+
+        function simulateStep() {
+            if (isPaused || totalCount >= 1000) {
+                return;
+            }
+
+            const point1 = getRandomPointOnCircle(1);
+            const point2 = getRandomPointOnCircle(1);
+            
+            const chordLength = calculateChordLength(
+                point1.x, point1.y, 
+                point2.x, point2.y
+            );
+
+            const isMatch = Math.abs(chordLength - SQRT3) < EPSILON;
+            
+            // 只存储√3长度的弦
+            if (isMatch) {
+                allChords.push({
+                    point1: point1,
+                    point2: point2,
+                    isMatch: true
+                });
+                sqrtThreeCount++;
+            }
+
+            drawCircle();
+            totalCount++;
+
+            updateResults();
+            document.getElementById('simulationCount').textContent = 
+                `模拟次数: ${totalCount}`;
+
+            if (totalCount < 1000) {
+                animationId = requestAnimationFrame(simulateStep);
+            }
+        }
+
+        function startSimulation() {
+            isPaused = false;
+            if (totalCount < 1000) {
+                simulateStep();
+            }
+        }
+
+        function pauseSimulation() {
+            isPaused = true;
+            cancelAnimationFrame(animationId);
+        }
+
+        function resetSimulation() {
+            totalCount = 0;
+            sqrtThreeCount = 0;
+            isPaused = true;
+            cancelAnimationFrame(animationId);
+            // 清空所有弦
+            allChords = [];
+            updateResults();
+            drawCircle();
+            document.getElementById('simulationCount').textContent = 
+                `模拟次数: ${totalCount}`;
+        }
+
+        function updateResults() {
+            document.getElementById('totalCount').textContent = totalCount;
+            document.getElementById('sqrtThreeCount').textContent = sqrtThreeCount;
+            document.getElementById('probability').textContent = 
+                ((sqrtThreeCount / totalCount) * 100).toFixed(2);
+        }
+
+        // 初始化
+        window.onload = function() {
+            drawCircle();
+        };
+    </script>
+</body>
+</html> 
